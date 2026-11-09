@@ -9,7 +9,6 @@ code works on the server and in the browser.
 | `melange-tiny.printf` | `Tiny_printf.Printf` | `Stdlib.Printf` |
 | `melange-tiny.hashtbl` | `Tiny_hashtbl.Hashtbl` | `Stdlib.Hashtbl` |
 | `melange-tiny.random` | `Tiny_random.Random` | `Stdlib.Random` |
-| `melange-tiny.int64` | `Tiny_int64.Int64` | `Stdlib.Int64` |
 | `melange-tiny.md5` | `Tiny_md5.Digest` | `Stdlib.Digest` |
 
 Each module has the name of the stdlib module that it replaces. Write
@@ -28,7 +27,6 @@ Sizes are in bytes.
 | printf | 48535 | 11652 | 4483 | 1856 |
 | hashtbl | 64542 | 16970 | 2829 | 1018 |
 | random | 56462 | 14756 | 2003 | 969 |
-| int64 | 10084 | 3947 | 6812 | 2565 |
 | md5 | 54625 | 13932 | 3149 | 1743 |
 
 The programs are in `size/`. Run `make size` to measure again.
@@ -41,7 +39,7 @@ opam pin add melange-tiny https://github.com/davesnx/melange-tiny.git
 
 ## Use with dune
 
-`printf`, `hashtbl`, `random` and `int64` have one implementation for native
+`printf`, `hashtbl` and `random` have one implementation for native
 and one for Melange. The native one is the default. The Melange one has the
 same name with `.js` at the end.
 
@@ -89,7 +87,7 @@ If you forget the `.js` library, dune stops with an error that says the
 native library is not compatible with Melange.
 
 For code that builds on both, use `(modes :standard melange)` in the
-library. The `example/` folder has a library that uses all five modules, a
+library. The `example/` folder has a library that uses all four modules, a
 native test and a Melange program. The test checks that both print the same
 text.
 
@@ -109,8 +107,8 @@ hashtbl/
   test/js/            the same test, compiled by Melange and run with node
 ```
 
-The virtual module is `Printf_impl`, `Hashtbl_impl`, `Random_impl` or
-`Int64_impl`. Do not use it directly. The public module is not virtual, so a
+The virtual module is `Printf_impl`, `Hashtbl_impl` or `Random_impl`.
+Do not use it directly. The public module is not virtual, so a
 library that uses it builds on Melange before the emit picks the
 implementation.
 
@@ -176,24 +174,6 @@ Differences:
 - On Melange, `self_init` takes its seed from `Math.random`.
 - Not for cryptography.
 
-### int64
-
-`zero`, `one`, `minus_one`, `max_int`, `min_int`, `neg`, `add`, `sub`,
-`mul`, `div`, `rem`, `succ`, `pred`, `abs`, `logand`, `logor`, `logxor`,
-`lognot`, `shift_left`, `shift_right`, `shift_right_logical`, `of_int`,
-`to_int`, `of_float`, `to_float`, `of_string`, `of_string_opt`, `to_string`,
-`compare`, `equal`, `min`, `max`.
-
-On Melange, a value is a JavaScript `BigInt`. The JavaScript engine must
-support `BigInt` (ES2020).
-
-Differences:
-
-- `t` is abstract. It is not `int64`. You cannot use `1L` or `Printf "%Ld"`.
-  Make a value with `of_int`, `of_float` or `of_string`.
-- Shift counts are `n land 63`.
-- On Melange, do not give a value to `Hashtbl.hash` or `Marshal`.
-
 ### md5
 
 `string`, `substring`, `to_hex`, `of_hex`, `from_hex`, `compare`, `equal`.
@@ -219,6 +199,7 @@ make test
 ## Develop
 
 ```sh
+make init    # local opam switch with OCaml 5.4.0, opam and npm dependencies
 make build   # dune build @all
 make test    # dune build @runtest, needs node
 make size    # prints the size table, needs esbuild (npm install)

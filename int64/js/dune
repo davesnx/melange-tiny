@@ -1,7 +1,0 @@
-(library
- (name tiny_int64_js)
- (public_name melange-tiny.int64.js)
- (implements tiny_int64)
- (modes melange)
- (preprocess
-  (pps melange.ppx)))

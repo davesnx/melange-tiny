@@ -1,4 +1,0 @@
-(library
- (name tiny_int64_native)
- (public_name melange-tiny.int64.native)
- (implements tiny_int64))

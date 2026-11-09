@@ -20,7 +20,7 @@
  (synopsis
   "Small replacements of OCaml stdlib modules for Melange, to keep JavaScript bundles small")
  (description
-  "Printf, Hashtbl, Random, Int64 and Digest (MD5) subsets that compile to small JavaScript with Melange and run on native OCaml too.")
+  "Printf, Hashtbl, Random and Digest (MD5) subsets that compile to small JavaScript with Melange and run on native OCaml too.")
  (depends
   (ocaml
    (>= 5.4))
