@@ -1,0 +1,6 @@
+(library
+ (name tiny_int64)
+ (public_name melange-tiny.int64)
+ (modes :standard melange)
+ (virtual_modules int64_impl)
+ (default_implementation melange-tiny.int64.native))

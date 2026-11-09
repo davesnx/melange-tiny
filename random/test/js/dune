@@ -1,0 +1,13 @@
+(copy_files# ../test.ml)
+
+(melange.emit
+ (target out)
+ (libraries melange-tiny.random melange-tiny.random.js)
+ (module_systems commonjs))
+
+(rule
+ (alias runtest)
+ (deps
+  (alias melange))
+ (action
+  (run node out/random/test/js/test.js)))

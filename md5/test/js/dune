@@ -1,0 +1,13 @@
+(copy_files# ../test.ml)
+
+(melange.emit
+ (target out)
+ (libraries melange-tiny.md5)
+ (module_systems commonjs))
+
+(rule
+ (alias runtest)
+ (deps
+  (alias melange))
+ (action
+  (run node out/md5/test/js/test.js)))

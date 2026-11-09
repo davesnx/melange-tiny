@@ -1,0 +1,4 @@
+(library
+ (name tiny_md5)
+ (public_name melange-tiny.md5)
+ (modes :standard melange))

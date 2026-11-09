@@ -1,0 +1,13 @@
+(copy_files# ../test.ml)
+
+(melange.emit
+ (target out)
+ (libraries melange-tiny.hashtbl melange-tiny.hashtbl.js)
+ (module_systems commonjs))
+
+(rule
+ (alias runtest)
+ (deps
+  (alias melange))
+ (action
+  (run node out/hashtbl/test/js/test.js)))

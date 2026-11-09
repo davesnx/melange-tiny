@@ -1,0 +1,4 @@
+(library
+ (name tiny_hashtbl_native)
+ (public_name melange-tiny.hashtbl.native)
+ (implements tiny_hashtbl))

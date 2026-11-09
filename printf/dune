@@ -1,0 +1,6 @@
+(library
+ (name tiny_printf)
+ (public_name melange-tiny.printf)
+ (modes :standard melange)
+ (virtual_modules printf_impl)
+ (default_implementation melange-tiny.printf.native))

@@ -1,0 +1,9 @@
+(library
+ (name app)
+ (modes :standard melange)
+ (libraries
+  melange-tiny.printf
+  melange-tiny.hashtbl
+  melange-tiny.random
+  melange-tiny.int64
+  melange-tiny.md5))

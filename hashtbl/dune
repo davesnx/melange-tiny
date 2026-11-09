@@ -1,0 +1,6 @@
+(library
+ (name tiny_hashtbl)
+ (public_name melange-tiny.hashtbl)
+ (modes :standard melange)
+ (virtual_modules hashtbl_impl)
+ (default_implementation melange-tiny.hashtbl.native))

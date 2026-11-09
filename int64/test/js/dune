@@ -1,0 +1,13 @@
+(copy_files# ../test.ml)
+
+(melange.emit
+ (target out)
+ (libraries melange-tiny.int64 melange-tiny.int64.js)
+ (module_systems commonjs))
+
+(rule
+ (alias runtest)
+ (deps
+  (alias melange))
+ (action
+  (run node out/int64/test/js/test.js)))

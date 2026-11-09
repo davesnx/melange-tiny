@@ -1,0 +1,7 @@
+(library
+ (name tiny_hashtbl_js)
+ (public_name melange-tiny.hashtbl.js)
+ (implements tiny_hashtbl)
+ (modes melange)
+ (preprocess
+  (pps melange.ppx)))

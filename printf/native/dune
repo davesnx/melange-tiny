@@ -1,0 +1,4 @@
+(library
+ (name tiny_printf_native)
+ (public_name melange-tiny.printf.native)
+ (implements tiny_printf))

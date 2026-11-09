@@ -1,0 +1,4 @@
+(library
+ (name tiny_random_native)
+ (public_name melange-tiny.random.native)
+ (implements tiny_random))

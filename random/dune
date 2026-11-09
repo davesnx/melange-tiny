@@ -1,0 +1,6 @@
+(library
+ (name tiny_random)
+ (public_name melange-tiny.random)
+ (modes :standard melange)
+ (virtual_modules random_impl)
+ (default_implementation melange-tiny.random.native))
