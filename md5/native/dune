@@ -1,0 +1,4 @@
+(library
+ (name tiny_md5_native)
+ (public_name melange-tiny.md5.native)
+ (implements tiny_md5))

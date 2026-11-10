@@ -1,8 +1,8 @@
 # melange-tiny
 
-Small replacements of OCaml stdlib modules for [Melange](https://melange.re).
-They keep JavaScript bundles small. They also run on native OCaml, so the same
-code works on the server and in the browser.
+Small drop-in replacements of OCaml stdlib modules for
+[Melange](https://melange.re). Each module has the signature and the behaviour
+of the stdlib module. Only the size of the JavaScript bundle is different.
 
 | Library | Module | Replaces |
 | --- | --- | --- |
@@ -12,24 +12,54 @@ code works on the server and in the browser.
 | `melange-tiny.md5` | `Tiny_md5.Digest` | `Stdlib.Digest` |
 
 Each module has the name of the stdlib module that it replaces. Write
-`open Tiny_printf` and `Printf` is the small one.
+`open Tiny_printf` and `Printf` is the small one. No other change to your code
+is necessary.
+
+```ocaml
+open Tiny_printf
+
+let message msg i = Printf.sprintf "%s at %d" msg i
+```
 
 ## Why
 
 On Melange, one call to a stdlib module can pull in a large part of the
-runtime. For example, `Printf.sprintf` brings `CamlinternalFormat`. This table
-shows the size of a small program that uses each module. Each program is
-bundled with `esbuild --bundle --minify`, then compressed with gzip level 9.
-Sizes are in bytes.
+runtime. For example, `Printf.sprintf` brings `CamlinternalFormat`, and
+`Hashtbl` brings `Domain`, `Random` and then `Printf`. This table shows the
+size of a small program that uses each module. The stdlib program and the tiny
+program have the same source, except the module path. Each program is bundled
+with `esbuild --bundle --minify`, then compressed with gzip level 9. Sizes are
+in bytes.
 
 | Library | stdlib raw | stdlib gzip | tiny raw | tiny gzip |
 | --- | ---: | ---: | ---: | ---: |
-| printf | 48535 | 11652 | 4483 | 1856 |
-| hashtbl | 64542 | 16970 | 2829 | 1018 |
-| random | 56462 | 14756 | 2003 | 969 |
-| md5 | 54625 | 13932 | 3149 | 1743 |
+| printf | 48535 | 11652 | 15400 | 4838 |
+| hashtbl | 64542 | 16970 | 8591 | 2961 |
+| random | 56462 | 14756 | 4568 | 2340 |
+| md5 | 54625 | 13932 | 3650 | 1858 |
 
 The programs are in `size/`. Run `make size` to measure again.
+
+## Same behaviour
+
+- On native OCaml, each module is the stdlib module (`include Stdlib.Printf`).
+- On Melange, each module is a small implementation with the same results as
+  the Melange stdlib module: the same output text, the same exceptions, the
+  same `Hashtbl` iteration order, the same `Random` numbers for a seed.
+- The signature is the signature of the stdlib of the platform. The Melange
+  stdlib and the native stdlib do not have the same functions in all cases
+  (for example `Random.split` is native only), and each platform gets its own
+  set.
+- The stdlib gives different results on native and on Melange in some cases
+  (`Random` numbers, 32-bit integers). The tiny modules do the same.
+
+A test for each module runs on native and in Node.js. In Node.js it compares
+the tiny module with the Melange stdlib module call by call. A signature check
+fails the build if a signature is different from the stdlib one.
+
+There is one difference. On Melange, `Stdlib.Digest.substring` and
+`Stdlib.Digest.subbytes` give a wrong digest when the offset is not 0.
+`Tiny_md5.Digest` gives the correct digest, the same as on native.
 
 ## Install
 
@@ -39,11 +69,8 @@ opam pin add melange-tiny https://github.com/davesnx/melange-tiny.git
 
 ## Use with dune
 
-`printf`, `hashtbl` and `random` have one implementation for native
-and one for Melange. The native one is the default. The Melange one has the
-same name with `.js` at the end.
-
-`md5` has one implementation for both. It has no `.js` library.
+Each library has one implementation for native and one for Melange. The native
+one is the default. The Melange one has the same name with `.js` at the end.
 
 ### Native
 
@@ -93,104 +120,36 @@ text.
 
 ## Layout
 
-Each library is a folder. `md5/` has one implementation. The other four
-are dune virtual libraries:
+Each library is a folder and a dune virtual library:
 
 ```
 hashtbl/
   hashtbl.mli         the public module, Tiny_hashtbl.Hashtbl
-  hashtbl.ml          the same code for native and Melange
-  hashtbl_impl.mli    the virtual module: the part that is not the same
-  native/             melange-tiny.hashtbl.native, the default
-  js/                 melange-tiny.hashtbl.js, for Melange
-  test/               test against Stdlib.Hashtbl on native
+  hashtbl.ml          include Hashtbl_impl
+  hashtbl_impl.mli    the virtual module, with the stdlib signature
+  native/             melange-tiny.hashtbl.native, the default: Stdlib.Hashtbl
+  js/                 melange-tiny.hashtbl.js, the small one for Melange
+  test/               test against Stdlib.Hashtbl
   test/js/            the same test, compiled by Melange and run with node
 ```
 
-The virtual module is `Printf_impl`, `Hashtbl_impl` or `Random_impl`.
-Do not use it directly. The public module is not virtual, so a
+The virtual module is `Printf_impl`, `Hashtbl_impl`, `Random_impl` or
+`Digest_impl`. Do not use it directly. The public module is not virtual, so a
 library that uses it builds on Melange before the emit picks the
 implementation.
 
-## Libraries
+## How each one is small
 
-Each module has a subset of the stdlib module. A function in the subset has
-the same name, type and result as in the stdlib, except for the differences
-below. The `.mli` files have the full details.
-
-### printf
-
-`Stdlib.Printf` reads the format string at run time. This module has no
-format strings. It has:
-
-- `int`, `hex ?upper ?width`, `float_g p`, `char_literal`: one conversion
-  each, for use with `^`. They give `%d`, `%x`, `%X`, `%0Nx`, `%.*g` and
-  `%C`.
-- `lit`, `s`, `d`, `conv f` and `^^`, to build a format. `sprintf` and
-  `ksprintf` use it.
-
-```ocaml
-open Tiny_printf
-
-let message msg i = Printf.sprintf Printf.(s ^^ lit " at " ^^ d) msg i
-```
-
-Differences:
-
-- A format is built from functions, not written as a string.
-- No flags except zero padding. No width on `%s` and `%d`. No `%f`, `%e`,
-  `%S`, `%B`, `%c`, `%i`, `%u`, `%o`.
-- No output to channels: no `printf`, `eprintf`, `fprintf`, `bprintf`.
-- `float_g` raises `Invalid_argument` if the precision is negative.
-- On Melange, `float_g` uses `toExponential` and `toPrecision`. It gives the
-  same text as Melange's `Printf` up to precision 21. Above 21, a number at or
-  above `1e21` is in decimal form, as on native.
-
-### hashtbl
-
-`create`, `clear`, `reset`, `replace`, `find`, `find_opt`, `mem`, `remove`,
-`length`, `iter`, `fold`. On Melange, the table is a JavaScript `Map`.
-
-Differences:
-
-- Keys must be strings, ints, chars, bools, floats or constant constructors.
-  On Melange, other keys are found only if they are the same physical value.
-- One binding per key. There is no `add`. Use `replace`.
-- `iter` and `fold` visit bindings in insertion order.
-- `create` has no `?random` argument.
-- On Melange, a `-0.` key comes back as `0.`.
-
-### random
-
-`init`, `self_init`, `bits`, `int`, `float`, `bool`. The generator is
-xorshift128 on 32-bit words.
-
-Differences:
-
-- The numbers are not the same as the stdlib numbers for the same seed. They
-  are the same on native and on Melange for a seed in the 32-bit range.
-- One global state. It is not safe to use from two domains.
-- `init` folds the seed to 32 bits.
-- On Melange, `self_init` takes its seed from `Math.random`.
-- Not for cryptography.
-
-### md5
-
-`string`, `substring`, `to_hex`, `of_hex`, `from_hex`, `compare`, `equal`.
-The digest is MD5, as in `Stdlib.Digest`.
-
-Differences:
-
-- No `bytes`, channels, files or BLAKE2 modules.
-- On Melange, the input must be shorter than 256 MB.
-- On Melange, `Stdlib.Digest.substring` gives a wrong digest when the offset
-  is not 0. `Tiny_md5.Digest.substring` gives the correct one.
+- `printf`: reads the format value that the compiler makes from the format
+  string, without `CamlinternalFormat`.
+- `hashtbl`: the stdlib algorithm without `Domain` and `Random`. With
+  `~random:true` or after `randomize`, the seed comes from `Math.random`.
+- `random`: the generator of the Melange stdlib with its own small MD5 for the
+  seed. The 64-bit runtime is in the bundle only when you call `int64` or
+  `bits64`.
+- `md5`: MD5 in OCaml, without the stdlib `Digest` module and channels.
 
 ## Tests
-
-Each library has a test that compares it with the stdlib module. The test
-runs on native, and Melange compiles the same test to JavaScript and runs it
-with Node.js.
 
 ```sh
 make test
@@ -202,7 +161,7 @@ make test
 make init    # local opam switch with OCaml 5.4.0, opam and npm dependencies
 make build   # dune build @all
 make test    # dune build @runtest, needs node
-make size    # prints the size table, needs esbuild (npm install)
+make size    # prints the size table, needs esbuild
 ```
 
 Set `ESBUILD` to use an `esbuild` binary that is not in `node_modules`.

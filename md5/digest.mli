@@ -1,52 +1,27 @@
-(** MD5 digests of strings: a small subset of [Stdlib.Digest].
+(** Message digests: a drop-in replacement for [Stdlib.Digest].
 
-    One OCaml implementation is used on native and on Melange. On Melange it
-    replaces [Stdlib.Digest] and the [caml_md5] runtime, so a bundle that uses
-    only this module does not get [Digest], [Bytes] channels or BLAKE2.
+    On native, this module is [Stdlib.Digest].
 
-    Each function has the same name, result and exceptions as the function
-    with the same name in [Stdlib.Digest] (MD5, 16 bytes).
+    On Melange, it has the same signature, results and exceptions as the
+    Melange [Stdlib.Digest], with a small MD5 implementation. A bundle that
+    uses only MD5 functions does not get the [Stdlib.Digest] module, the
+    [caml_md5] runtime, channels or the BLAKE2 modules.
 
-    Not included: [bytes], [subbytes], [channel], [file], [output], [input],
-    the [S] module type and the [BLAKE128], [BLAKE256], [BLAKE512] and [MD5]
-    submodules. A browser runtime has no channels or files, and it works on
-    strings, not bytes.
+    As in the Melange [Stdlib.Digest]:
+    - [channel], [file], [MD5.channel] and all BLAKE2 hash functions call the
+      runtime primitives [caml_md5_chan], [caml_ml_open_descriptor_in] and
+      [caml_blake2_*]. Melange does not supply them, so these functions raise
+      a JavaScript [Error] unless the program defines them on [globalThis].
+    - [input] and [output] use [Stdlib.really_input_string] and
+      [Stdlib.output_string].
+    - A string that comes from JavaScript can contain code units above 255.
+      Hash functions and [to_hex] give the same result or exception for such
+      strings.
 
-    Difference on Melange: an OCaml [int] is 32 bits there, so the input
-    must be shorter than 2{^28} bytes (256 MB). On native the limit is the
-    string size limit. *)
+    One difference on Melange: [Stdlib.Digest.substring s ofs len],
+    [Stdlib.Digest.subbytes b ofs len] and the same functions in
+    [Stdlib.Digest.MD5] hash the bytes from [ofs] to position [len] when
+    [ofs > 0], not [len] bytes from [ofs]. This module gives the correct
+    digest, the same as on native. *)
 
-type t = string
-(** A digest: a string of 16 bytes. *)
-
-val compare : t -> t -> int
-(** Same as [String.compare]. *)
-
-val equal : t -> t -> bool
-(** Same as [String.equal]. *)
-
-val string : string -> t
-(** [string s] is the MD5 digest of [s]. *)
-
-val substring : string -> int -> int -> t
-(** [substring s ofs len] is the MD5 digest of the [len] bytes of [s] that
-    start at position [ofs]. On Melange, [Stdlib.Digest.substring] with
-    [ofs > 0] hashes the bytes from [ofs] to [len], not [len] bytes from
-    [ofs]. This function gives the correct digest on both platforms.
-    @raise Invalid_argument ["Digest.substring"] if [ofs] and [len] do not
-    give a valid substring of [s]. *)
-
-val to_hex : t -> string
-(** [to_hex d] is [d] as 32 lowercase hexadecimal characters.
-    @raise Invalid_argument ["Digest.to_hex"] if [d] is not 16 bytes long. *)
-
-val of_hex : string -> t
-(** [of_hex s] is the digest that [s] writes in hexadecimal. Upper and lower
-    case letters are accepted.
-    @raise Invalid_argument ["Digest.from_hex"] if [s] is not 32 characters
-    long.
-    @raise Invalid_argument ["Digest.of_hex"] if [s] has a character that is
-    not a hexadecimal digit. *)
-
-val from_hex : string -> t
-(** Same as [of_hex]. *)
+include module type of Stdlib.Digest

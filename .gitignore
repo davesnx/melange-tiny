@@ -2,3 +2,4 @@ _build
 node_modules
 *.install
 _opam
+_build_*

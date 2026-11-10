@@ -10,4 +10,6 @@
  (deps
   (alias melange))
  (action
-  (run node out/hashtbl/test/js/test.js)))
+  (progn
+   (run node out/hashtbl/test/js/test.js)
+   (run node out/hashtbl/test/js/test_js.js))))

@@ -1,4 +1,6 @@
 (library
  (name tiny_md5)
  (public_name melange-tiny.md5)
- (modes :standard melange))
+ (modes :standard melange)
+ (virtual_modules digest_impl)
+ (default_implementation melange-tiny.md5.native))

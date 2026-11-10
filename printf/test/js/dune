@@ -8,6 +8,7 @@
 (rule
  (alias runtest)
  (deps
-  (alias melange))
+  (alias melange)
+  run.mts)
  (action
-  (run node out/printf/test/js/test.js)))
+  (run node run.mts out/printf/test/js/test.js out/printf/test/js/args_test.js)))

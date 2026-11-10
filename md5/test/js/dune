@@ -2,7 +2,9 @@
 
 (melange.emit
  (target out)
- (libraries melange-tiny.md5)
+ (libraries melange-tiny.md5 melange-tiny.md5.js)
+ (preprocess
+  (pps melange.ppx))
  (module_systems commonjs))
 
 (rule
