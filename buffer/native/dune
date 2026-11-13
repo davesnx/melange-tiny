@@ -1,0 +1,4 @@
+(library
+ (name tiny_buffer_native)
+ (public_name melange-tiny.buffer.native)
+ (implements tiny_buffer))

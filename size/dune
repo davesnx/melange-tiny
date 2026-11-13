@@ -4,7 +4,8 @@
   melange-tiny.printf.js
   melange-tiny.hashtbl.js
   melange-tiny.random.js
-  melange-tiny.md5.js)
+  melange-tiny.md5.js
+  melange-tiny.buffer.js)
  (preprocess
   (pps melange.ppx))
  (module_systems

@@ -1,0 +1,6 @@
+(library
+ (name tiny_buffer)
+ (public_name melange-tiny.buffer)
+ (modes :standard melange)
+ (virtual_modules buffer_impl)
+ (default_implementation melange-tiny.buffer.native))

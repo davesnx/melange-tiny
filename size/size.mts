@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 
-const libraries = ["printf", "hashtbl", "random", "md5"] as const;
+const libraries = ["printf", "hashtbl", "random", "md5", "buffer"] as const;
 const variants = ["stdlib", "tiny"] as const;
 const out = "_build/default/size/out/size";
 const esbuild = process.env.ESBUILD ?? "node_modules/.bin/esbuild";

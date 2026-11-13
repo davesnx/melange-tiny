@@ -1,0 +1,15 @@
+(copy_files# ../test.ml)
+
+(melange.emit
+ (target out)
+ (libraries melange-tiny.buffer melange-tiny.buffer.js)
+ (preprocess
+  (pps melange.ppx))
+ (module_systems commonjs))
+
+(rule
+ (alias runtest)
+ (deps
+  (alias melange))
+ (action
+  (run node out/buffer/test/js/test.js)))

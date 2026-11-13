@@ -1,8 +1,8 @@
 # melange-tiny
 
 A prototype. It answers one question: how small can `Printf`, `Hashtbl`,
-`Random` and `Digest` be in a [Melange](https://melange.re) bundle, with the
-signature and the behaviour of the stdlib modules?
+`Random`, `Digest` and `Buffer` be in a [Melange](https://melange.re) bundle,
+with the signature and the behaviour of the stdlib modules?
 
 It is an experiment, not a library to depend on. It is not on opam, it has no
 releases, and it can change or stop at any time. The useful parts are the
@@ -26,6 +26,7 @@ gzip level 9. Sizes are in bytes.
 | `Hashtbl` | 64542 | 16970 | 8591 | 2961 |
 | `Random` | 56462 | 14756 | 4568 | 2340 |
 | `Digest` | 54625 | 13932 | 3650 | 1858 |
+| `Buffer` | 3423 | 1333 | 2272 | 867 |
 
 Measured with Melange 7.0.1-54 and OCaml 5.4.0. The programs are in `size/`.
 Run `make size` to measure again.
@@ -40,6 +41,10 @@ Run `make size` to measure again.
   seed. The 64-bit runtime is in the bundle only when you call `int64` or
   `bits64`.
 - `Digest`: MD5 in OCaml, without the stdlib `Digest` module and channels.
+- `Buffer`: a JavaScript string that grows by concatenation, without the
+  stdlib `Bytes` module and the bytes runtime. The bytes runtime is in the
+  bundle only when you call a function that takes or returns `bytes`, or a
+  channel function.
 
 ## Same behaviour
 
@@ -60,9 +65,22 @@ A test for each module runs on native and in Node.js. In Node.js it compares
 the tiny module with the Melange stdlib module call by call. A signature check
 fails the build if a signature is different from the stdlib one.
 
-There is one difference. On Melange, `Stdlib.Digest.substring` and
+`Digest` has one difference. On Melange, `Stdlib.Digest.substring` and
 `Stdlib.Digest.subbytes` give a wrong digest when the offset is not 0.
 `Tiny_md5.Digest` gives the correct digest, the same as on native.
+
+On both platforms, `Tiny_buffer.Buffer.t` is not `Stdlib.Buffer.t`. Functions
+that take a `Stdlib.Buffer.t`, such as `Printf.bprintf`, do not accept it.
+
+`Buffer` has two differences on Melange:
+
+- `add_int8 b x` and `add_uint8 b x` with `x < 0` or `x > 0xffff`:
+  `contents` is the same, but `nth`, `to_seq`, `to_seqi`, `to_bytes` and
+  `blit` give `x land 0xffff`. The Melange `Stdlib.Buffer` gives `x`, which
+  is not a valid `char`.
+- `add_utf_8_uchar`, `add_utf_16le_uchar` and `add_utf_16be_uchar` with a
+  value from `Uchar.unsafe_of_int` below 0 or above `0x10FFFF` do not raise
+  `Assert_failure`.
 
 ## Run it
 
@@ -90,10 +108,10 @@ hashtbl/
   test/js/            the same test, compiled by Melange and run with node
 ```
 
-`printf/`, `random/` and `md5/` have the same shape. `size/` has the programs
-of the size table. `example/` has a library that uses all four modules, a
-native test and a Melange program. The test checks that both print the same
-text.
+`printf/`, `random/`, `md5/` and `buffer/` have the same shape. `size/` has the
+programs of the size table. `example/` has a library that uses all five
+modules, a native test and a Melange program. The test checks that both print
+the same text.
 
 ## Try it in a project
 
@@ -109,6 +127,7 @@ opam pin add melange-tiny https://github.com/davesnx/melange-tiny.git
 | `melange-tiny.hashtbl` | `Tiny_hashtbl.Hashtbl` | `Stdlib.Hashtbl` |
 | `melange-tiny.random` | `Tiny_random.Random` | `Stdlib.Random` |
 | `melange-tiny.md5` | `Tiny_md5.Digest` | `Stdlib.Digest` |
+| `melange-tiny.buffer` | `Tiny_buffer.Buffer` | `Stdlib.Buffer` |
 
 Each module has the name of the stdlib module that it replaces. Write
 `open Tiny_printf` and `Printf` is the small one.
